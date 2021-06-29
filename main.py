@@ -1,14 +1,17 @@
+import asyncio
+
 import discord
 
 
 
 class MyClient(discord.Client):
+    ch = None
     async def entrar(self,ctx):
         canal = ctx.author.voice.channel
         # I suggest make it global so other commands can acess it
         global voice_client
         voice_client = await canal.connect()
-    async def on_message(self,message):
+    async def on_message(self, message):
         if message.author == client.user:
             return
 
@@ -18,9 +21,13 @@ class MyClient(discord.Client):
             await message.channel.send('It is meme!')
         elif message.content.startswith('$vc'):
             channel = message.author.voice.channel
-            await channel.connect()
+            self.ch = await channel.connect()
         elif message.content.startswith('$ds'):
             await message.guild.voice_client.disconnect()
+            self.ch = None
+        elif message.content.startswith('$bruh'):
+            self.ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source ='test.mp3'))
+
 
     async def on_ready(self):
         print('We have logged in as {0.user}'.format(client))
@@ -43,4 +50,4 @@ class MyClient(discord.Client):
 
 intents = discord.Intents().all()
 client = MyClient(intents=intents)
-client.run("TOKEN")
+client.run("")
