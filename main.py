@@ -1,16 +1,20 @@
 import asyncio
-
+import configparser
 import discord
 
+config = configparser.ConfigParser()
+config.read("config.ini")
 
 
 class MyClient(discord.Client):
     ch = None
-    async def entrar(self,ctx):
+
+    async def entrar(self, ctx):
         canal = ctx.author.voice.channel
         # I suggest make it global so other commands can acess it
         global voice_client
         voice_client = await canal.connect()
+
     async def on_message(self, message):
         if message.author == client.user:
             return
@@ -26,11 +30,11 @@ class MyClient(discord.Client):
             await message.guild.voice_client.disconnect()
             self.ch = None
         elif message.content.startswith('$bruh'):
-            self.ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source ='test.mp3'))
-
+            self.ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source='test.mp3'))
 
     async def on_ready(self):
         print('We have logged in as {0.user}'.format(client))
+
     async def on_member_update(self, before, after):
         if before.id == 622157169504288778 and before.activity != after.activity:
             if after.activity == None:
@@ -41,7 +45,7 @@ class MyClient(discord.Client):
             else:
                 try:
                     a = 'Why are we not in ' + after.activity.name + '?'
-                    if(len(a) >=32):
+                    if (len(a) >= 32):
                         a = a[:30] + '?'
                     await after.edit(nick=a)
                 except discord.errors.Forbidden:
@@ -50,4 +54,4 @@ class MyClient(discord.Client):
 
 intents = discord.Intents().all()
 client = MyClient(intents=intents)
-client.run("")
+client.run(config['Token']['token'])
