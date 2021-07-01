@@ -1,15 +1,28 @@
+from __future__ import unicode_literals
 import asyncio
 import configparser
 import discord
 from discord.ext import commands
 from discord.ext.commands import bot
+import requests
+import json
+
+import youtube_dl
 
 config = configparser.ConfigParser()
 config.read("config.ini")
+youtubekey = config["Token"]["youtubekey"]
 
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix='$', intents=intents)
-
+ydl_opts = {
+    'format': 'bestaudio/best',
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '320',
+    }],
+}
 ch = None
 
 
@@ -68,8 +81,21 @@ async def say(ctx, *, arg='bruh'):
 
 @bot.command()
 async def play(ctx, *, arg='test'):
+    url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=" + arg + "&type=video&key=" + youtubekey
+    r = requests.get(url)
+    print(r.text)
+    a = r.text[r.text.find('"videoId":'):]
+    a= a[:a.find("}")]
+    a = a[12:-8]
+    b = r.text[r.text.find('"title":'):]
+    b = b[:b.find('"description"') - 11]
+    b = b[10:]
+    print(a)
+    print(b)
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download(['http://www.youtube.com/watch?v=' + a])
     if ch is not None:
-        ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=arg + '.mp3'))
+        ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=b + "-" + a + '.mp3'))
     else:
         ctx.send('Отсутствует')
 
