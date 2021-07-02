@@ -92,12 +92,13 @@ async def play(ctx, *, arg='test'):
     b = b[10:]
     print(a)
     print(b)
+    global ch
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         ydl.download(['http://www.youtube.com/watch?v=' + a])
-    if ch is not None:
-        ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=b + "-" + a + '.mp3'))
-    else:
-        ctx.send('Отсутствует')
+    if ch is None:
+        channel = ctx.author.voice.channel
+        ch = await channel.connect()
+    ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=b + "-" + a + '.mp3'))
 
 
 bot.run(config['Token']['token'])
