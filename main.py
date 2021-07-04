@@ -100,5 +100,23 @@ async def play(ctx, *, arg='test'):
         ch = await channel.connect()
     ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=b + "-" + a + '.mp3'))
 
+@bot.command()
+async def pause(ctx):
+    global ch
+    if ch is None:
+        ctx.send("Play smh")
+    else:
+        ch.pause()
+
+@bot.command()
+async def resume(ctx):
+    global ch
+    if ch is None:
+        ctx.send("Play smh")
+    else:
+        ch.resume()
+
+
+
 
 bot.run(config['Token']['token'])
