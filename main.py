@@ -13,8 +13,6 @@ from discord.ext.commands import bot
 import requests
 import json
 
-
-
 import youtube_dl
 
 config = configparser.ConfigParser()
@@ -88,12 +86,15 @@ async def say(ctx, *, arg='bruh'):
     print('test')
     await ctx.send(arg)
 
+
 @bot.command()
 async def play(ctx, *, arg='test'):
     global q
     global ch
     if arg.find("list") != -1:
-        u = arg[arg.find("list") +5:]
+
+        u = arg[arg.rfind("list") + 5:]
+
         print(u)
         url = 'https://www.youtube.com/playlist?list=' + u
         query = parse_qs(urlparse(url).query, keep_blank_values=True)
@@ -154,13 +155,28 @@ async def play(ctx, *, arg='test'):
         while ch.is_playing() or ch.is_paused():
             await asyncio.sleep(1)
 
+
+@bot.command()
+async def skip(ctx):
+    global ch
+    global q
+    if ch is None:
+        ctx.send("Play smh")
+    else:
+        ch.pause()
+        n = q.get(0)
+        voice_file = eyed3.load(n)
+        secs = int(voice_file.info.time_secs)
+        ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=n))
+
 @bot.command()
 async def pause(ctx):
     global ch
     if ch is None:
         ctx.send("Play smh")
     else:
-        ch.pause()
+        ch.stop()
+
 
 @bot.command()
 async def resume(ctx):
@@ -169,6 +185,7 @@ async def resume(ctx):
         ctx.send("Play smh")
     else:
         ch.resume()
+
 
 # @bot.command()
 # async def playlist(ctx, *, arg='test'):
@@ -182,8 +199,6 @@ async def resume(ctx):
 #         source = queue.pop(0)
 #         voice.play(player, after=lambda e: play_next(ctx, source))
 #         await ctx.send('playing song')
-
-
 
 
 bot.run(config['Token']['token'])
