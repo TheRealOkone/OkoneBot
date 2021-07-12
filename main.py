@@ -26,7 +26,7 @@ ydl_opts = {
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
-        'preferredquality': '192',
+        'preferredquality': '320',
     }],
 }
 ch = None
@@ -163,7 +163,7 @@ async def skip(ctx):
     if ch is None:
         ctx.send("Play smh")
     else:
-        ch.pause()
+        ch.stop()
         n = q.get(0)
         voice_file = eyed3.load(n)
         secs = int(voice_file.info.time_secs)
