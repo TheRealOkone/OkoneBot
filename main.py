@@ -2,16 +2,12 @@ from __future__ import unicode_literals
 import asyncio
 import configparser
 import queue
-import time
 import googleapiclient.discovery
 from urllib.parse import parse_qs, urlparse
 import discord
-import eyed3
-from discord import FFmpegPCMAudio
 from discord.ext import commands
 from discord.ext.commands import bot
 import requests
-import json
 
 import youtube_dl
 
@@ -22,6 +18,7 @@ youtubekey = config["Token"]["youtubekey"]
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix='$', intents=intents)
 ydl_opts = {
+    'age_limit': 20,
     'format': 'bestaudio/best',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
@@ -67,14 +64,16 @@ async def vc(ctx):
 @bot.command()
 async def bruh(ctx):
     global ch
-    ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source='test.mp3'))
+    ch.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source='test.mp3'))
 
 
 @bot.command()
 async def ds(ctx):
     global ch
+    global q
     await ctx.guild.voice_client.disconnect()
     ch = None
+    q = queue.Queue()
 
 
 @bot.command()
@@ -124,31 +123,38 @@ async def play(ctx, *, arg='test'):
         ])
         for t in playlist_items:
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(['http://www.youtube.com/watch?v=' + t["snippet"]["resourceId"]["videoId"]], download=False)
+                info = ydl.extract_info('http://www.youtube.com/watch?v=' + t["snippet"]["resourceId"]["videoId"], download=False)
                 URL = info['formats'][0]['url']
                 q.put(URL)
                 #ydl.download(['http://www.youtube.com/watch?v=' + t["snippet"]["resourceId"]["videoId"]])
                 #str = t["snippet"]["title"] + "-" + t["snippet"]["resourceId"]["videoId"] + '.mp3'
                 #q.put(str)
     else:
-        url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=" + arg + "&type=video&key=" + youtubekey
-        r = requests.get(url)
-        print(r.text)
-        a = r.text[r.text.find('"videoId":'):]
-        a = a[:a.find("}")]
-        a = a[12:-8]
-        #b = r.text[r.text.find('"title":'):]
-        #b = b[:b.find('"description"') - 11]
-        #b = b[10:]
-        #print(a)
-        #print(b)
-        #str = b + "-" + a + '.mp3'
-        #q.put(str)
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(['http://www.youtube.com/watch?v=' + a], download=False)
-            #ydl.download(['http://www.youtube.com/watch?v=' + a])
-        URL = info['formats'][0]['url']
-        q.put(URL)
+        if arg.find('https://www.youtube.com') != -1:
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(arg, download=False)
+            URL = info['formats'][0]['url']
+            q.put(URL)
+        else:
+            url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=" + arg + "&type=video&key=" + youtubekey
+            print(arg)
+            r = requests.get(url)
+            print(r.text)
+            a = r.text[r.text.find('"videoId":'):]
+            a = a[:a.find("}")]
+            a = a[12:-8]
+            #b = r.text[r.text.find('"title":'):]
+            #b = b[:b.find('"description"') - 11]
+            #b = b[10:]
+            #print(a)
+            #print(b)
+            #str = b + "-" + a + '.mp3'
+            #q.put(str)
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info('http://www.youtube.com/watch?v=' + a, download=False)
+                #ydl.download(['http://www.youtube.com/watch?v=' + a])
+            URL = info['formats'][0]['url']
+            q.put(URL)
     if ch is None:
         channel = ctx.author.voice.channel
         ch = await channel.connect()
@@ -157,7 +163,7 @@ async def play(ctx, *, arg='test'):
         n = q.get(0)
         #voice_file = eyed3.load(n)
         #secs = int(voice_file.info.time_secs)
-        ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=n, **FFMPEG_OPTIONS))
+        ch.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=n, **FFMPEG_OPTIONS))
         #ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=n))
         #print(secs)
         while ch.is_playing() or ch.is_paused():
@@ -175,7 +181,7 @@ async def skip(ctx):
         n = q.get(0)
         #voice_file = eyed3.load(n)
         #secs = int(voice_file.info.time_secs)
-        ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=n, **FFMPEG_OPTIONS))
+        ch.play(discord.FFmpegPCMAudio(executable="ffmpeg.exe", source=n, **FFMPEG_OPTIONS))
         #ch.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=n))
 
 @bot.command()
@@ -184,7 +190,7 @@ async def pause(ctx):
     if ch is None:
         ctx.send("Play smh")
     else:
-        ch.stop()
+        ch.pause()
 
 
 @bot.command()
