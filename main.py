@@ -159,7 +159,7 @@ async def play(ctx, *, arg='test'):
         channel = ctx.author.voice.channel
         ch = await channel.connect()
     print("Starting///")
-    while not q.empty():
+    while not q.empty() and not ch.is_playing():
         n = q.get(0)
         #voice_file = eyed3.load(n)
         #secs = int(voice_file.info.time_secs)
